@@ -3,177 +3,679 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Production Color Change + Resin Calculator</title>
+<title>Production Color Change Dashboard</title>
+
 <style>
 :root{
-  --bg:#f5f7fb; --card:#fff; --text:#111827; --muted:#667085;
-  --sap:#fff4cc; --sap-border:#f7c948;
-  --placeholder:#eef4ff; --placeholder-border:#84a9ff;
-  --alert:#fff1f3; --alert-border:#ffb3c1; --alert-text:#b42318;
-  --green:#0b5; --purple:#5b2cff; --line:#e5e7eb;
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --text:#111827;
+  --muted:#667085;
+  --red:#fff1f3;
+  --redBorder:#ffb3c1;
+  --redText:#b42318;
+  --blue:#eef4ff;
+  --blueBorder:#84a9ff;
+  --blueText:#1d4ed8;
+  --green:#ecfdf3;
+  --greenBorder:#abefc6;
+  --greenText:#027a48;
+  --yellow:#fff7e6;
+  --yellowBorder:#fedf89;
+  --yellowText:#b45309;
+  --purple:#f4f0ff;
+  --purpleBorder:#d6bbfb;
+  --purpleText:#5925dc;
+  --line:#e5e7eb;
 }
+
 *{box-sizing:border-box}
-body{font-family:system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text);padding:14px}
-.wrap{max-width:1280px;margin:auto}
-.header{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-bottom:14px}
-h1{font-size:24px;margin:0}
-h2{font-size:18px;margin:0 0 10px}
-h3{font-size:15px;margin:0 0 8px}
-.sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
-.legend{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
-.pill{font-size:12px;font-weight:800;border-radius:999px;padding:6px 10px}
-.pill.sap{background:var(--sap);border:1px solid var(--sap-border);color:#7a4b00}
-.pill.place{background:var(--placeholder);border:1px solid var(--placeholder-border);color:#1d4ed8}
-.pill.alert{background:var(--alert);border:1px solid var(--alert-border);color:var(--alert-text)}
-.pill.calc{background:#ecfdf3;border:1px solid #abefc6;color:#027a48}
 
-.layout{display:grid;grid-template-columns:1.35fr .9fr;gap:14px}
-@media(max-width:980px){.layout{grid-template-columns:1fr}}
-.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-bottom:14px}
-.alertbox{background:var(--alert);border:1px solid var(--alert-border);color:var(--alert-text);padding:14px;border-radius:14px;font-weight:900;margin-top:10px}
-.placeholder{background:var(--placeholder);border:1px dashed var(--placeholder-border);border-radius:14px;padding:12px;font-size:13px;color:#1d4ed8;font-weight:700;margin-top:10px}
-table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden}
-th,td{border:1px solid var(--line);padding:9px;text-align:left;font-size:13px;vertical-align:top}
-th{background:#f3f4f6;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-.sap-cell{background:var(--sap);font-weight:800}
-.manual-cell{background:#eff6ff;font-weight:800}
-.status-prep{background:#fff1f3;color:#b42318;font-weight:900;border-radius:999px;padding:5px 9px;display:inline-block}
-.status-ok{background:#ecfdf3;color:#027a48;font-weight:900;border-radius:999px;padding:5px 9px;display:inline-block}
-.status-soon{background:#fff7e6;color:#b45309;font-weight:900;border-radius:999px;padding:5px 9px;display:inline-block}
+body{
+  font-family:system-ui,Arial,sans-serif;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  padding:14px;
+}
 
-.machine-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:700px){.machine-grid{grid-template-columns:repeat(2,1fr)}}
-.machine{border-radius:14px;padding:12px;border:1px solid #e7edf7;background:#f8fafc}
-.machine .name{font-size:20px;font-weight:900}
-.machine .line{font-size:12px;color:#475467;margin-top:4px}
-.machine.prep{background:#fff1f3;border-color:#ffb3c1}
-.machine.soon{background:#fff7e6;border-color:#fedf89}
-.machine.ok{background:#ecfdf3;border-color:#abefc6}
+.wrap{
+  max-width:1320px;
+  margin:auto;
+}
 
-.calc-card{border-radius:16px;padding:14px;margin-bottom:14px;border:1px solid #e5e7eb}
-label{display:block;font-size:12px;color:#344054;font-weight:800;margin:10px 0 5px}
-select,input{width:100%;padding:11px;border:1px solid #cfd6df;border-radius:10px;font-size:15px;background:#fff}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:560px){.two{grid-template-columns:1fr}}
-.result{margin-top:12px;border-radius:14px;padding:14px;color:#fff}
-.result.green{background:var(--green)}
-.result.purple{background:linear-gradient(135deg,#5b2cff,#7a4dff)}
-.big{font-size:28px;font-weight:900;margin-top:4px}
-.small{font-size:12px;opacity:.95}
-.kv{margin-top:10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:10px;display:grid;grid-template-columns:1fr auto;gap:6px;font-size:13px}
-.kv b{font-weight:900}
-button{width:100%;padding:11px;border:0;border-radius:10px;background:#1f6feb;color:#fff;font-size:15px;font-weight:800;margin-top:10px;cursor:pointer}
-.footer{font-size:12px;color:var(--muted);text-align:center;margin:16px 0}
+.header,.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  margin-bottom:14px;
+}
+
+h1{
+  font-size:24px;
+  margin:0;
+}
+
+h2{
+  font-size:18px;
+  margin:0 0 10px;
+}
+
+h3{
+  font-size:15px;
+  margin:0 0 8px;
+}
+
+.sub{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:6px;
+  line-height:1.4;
+}
+
+.legend{
+  margin-top:12px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.pill{
+  font-size:12px;
+  font-weight:900;
+  border-radius:999px;
+  padding:6px 10px;
+  display:inline-block;
+}
+
+.pill.red{background:var(--red);border:1px solid var(--redBorder);color:var(--redText);}
+.pill.blue{background:var(--blue);border:1px solid var(--blueBorder);color:var(--blueText);}
+.pill.green{background:var(--green);border:1px solid var(--greenBorder);color:var(--greenText);}
+.pill.yellow{background:var(--yellow);border:1px solid var(--yellowBorder);color:var(--yellowText);}
+.pill.purple{background:var(--purple);border:1px solid var(--purpleBorder);color:var(--purpleText);}
+
+.layout{
+  display:grid;
+  grid-template-columns:1.35fr .9fr;
+  gap:14px;
+}
+
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr;}
+}
+
+.machine-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+@media(max-width:760px){
+  .machine-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+.machine-card{
+  border-radius:14px;
+  padding:12px;
+  border:1px solid var(--line);
+}
+
+.machine-card.ok{
+  background:var(--green);
+  border-color:var(--greenBorder);
+}
+
+.machine-card.soon{
+  background:var(--yellow);
+  border-color:var(--yellowBorder);
+}
+
+.machine-card.prep{
+  background:var(--red);
+  border-color:var(--redBorder);
+}
+
+.machine-name{
+  font-size:22px;
+  font-weight:950;
+}
+
+.machine-line{
+  font-size:12px;
+  margin-top:4px;
+  color:#344054;
+  font-weight:700;
+}
+
+.status{
+  font-weight:950;
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:11px;
+  display:inline-block;
+}
+
+.status.prep{background:var(--red);color:var(--redText);border:1px solid var(--redBorder);}
+.status.claimed{background:var(--yellow);color:var(--yellowText);border:1px solid var(--yellowBorder);}
+.status.ready{background:var(--green);color:var(--greenText);border:1px solid var(--greenBorder);}
+.status.future{background:var(--blue);color:var(--blueText);border:1px solid var(--blueBorder);}
+
+.alert-card{
+  border:2px solid var(--redBorder);
+  background:var(--red);
+  border-radius:16px;
+  padding:15px;
+  margin-bottom:12px;
+}
+
+.alert-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.big-machine{
+  font-size:30px;
+  font-weight:950;
+  line-height:1;
+}
+
+.alert-title{
+  font-size:18px;
+  font-weight:950;
+  color:var(--redText);
+}
+
+.details-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+
+@media(max-width:700px){
+  .details-grid{grid-template-columns:1fr 1fr;}
+}
+
+.box{
+  background:white;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+}
+
+.label{
+  font-size:10px;
+  color:#667085;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  font-weight:900;
+}
+
+.value{
+  font-size:14px;
+  font-weight:850;
+  margin-top:4px;
+}
+
+.button-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+@media(max-width:560px){
+  .button-row{grid-template-columns:1fr;}
+}
+
+button{
+  border:0;
+  border-radius:12px;
+  padding:12px;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.claim{
+  background:#1f6feb;
+  color:white;
+}
+
+.readyBtn{
+  background:#0b5;
+  color:white;
+}
+
+.placeholder{
+  background:var(--blue);
+  border:1px dashed var(--blueBorder);
+  border-radius:14px;
+  padding:12px;
+  font-size:13px;
+  color:var(--blueText);
+  font-weight:800;
+  margin-top:10px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+th,td{
+  border:1px solid var(--line);
+  padding:9px;
+  text-align:left;
+  font-size:13px;
+}
+
+th{
+  background:#f3f4f6;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.log{
+  display:grid;
+  gap:10px;
+}
+
+.log-item{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  background:#f8fafc;
+}
+
+.log-title{
+  font-weight:950;
+}
+
+.log-sub{
+  font-size:12px;
+  color:#667085;
+  margin-top:4px;
+}
+
+.metric-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.metric{
+  border-radius:14px;
+  padding:12px;
+  background:#f8fafc;
+  border:1px solid var(--line);
+}
+
+.metric .num{
+  font-size:28px;
+  font-weight:950;
+}
+
+.metric .name{
+  font-size:12px;
+  color:#667085;
+  font-weight:800;
+}
+
+.rank1 td:first-child{background:var(--green);font-weight:950;}
+.rank2 td:first-child{background:var(--yellow);font-weight:950;}
+.rank3 td:first-child{background:var(--purple);font-weight:950;}
+
+.calc-card{
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  border:1px solid var(--line);
+}
+
+label{
+  display:block;
+  font-size:12px;
+  color:#344054;
+  font-weight:900;
+  margin:10px 0 5px;
+}
+
+select,input{
+  width:100%;
+  padding:11px;
+  border:1px solid #cfd6df;
+  border-radius:10px;
+  font-size:15px;
+  background:#fff;
+}
+
+.two{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.result{
+  margin-top:12px;
+  border-radius:14px;
+  padding:14px;
+  color:#fff;
+}
+
+.result.green{background:#0b5;}
+.result.purple{background:linear-gradient(135deg,#5b2cff,#7a4dff);}
+
+.big{
+  font-size:28px;
+  font-weight:950;
+  margin-top:4px;
+}
+
+.small{
+  font-size:12px;
+  opacity:.95;
+}
+
+.kv{
+  margin-top:10px;
+  background:#f8fafc;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:6px;
+  font-size:13px;
+}
+
+.kv b{
+  font-weight:950;
+}
+
+.footer{
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+  margin:16px 0;
+}
 </style>
 </head>
+
 <body>
 <div class="wrap">
 
   <div class="header">
-    <h1>Production Color Change Web App + Resin Calculators</h1>
-    <div class="sub">GitHub webpage mockup for team review. SAP and notification features are shown as highlighted placeholders; calculators on the side are functional.</div>
+    <h1>Production Color Change Dashboard</h1>
+    <div class="sub">
+      Demo page for GitHub. Shows machine status, upcoming color changes, blender signature workflow,
+      performance tracking, SharePoint/SAP placeholders, and resin calculators.
+    </div>
     <div class="legend">
-      <span class="pill sap">Yellow = SAP data pull</span>
-      <span class="pill place">Blue = placeholder / future integration</span>
-      <span class="pill alert">Red = prep alert display</span>
-      <span class="pill calc">Green = calculator section</span>
+      <span class="pill red">Prep Needed</span>
+      <span class="pill yellow">Upcoming / Claimed</span>
+      <span class="pill green">Running / Ready</span>
+      <span class="pill blue">SharePoint / SAP Placeholder</span>
+      <span class="pill purple">Performance Tracker</span>
     </div>
   </div>
 
   <div class="layout">
+
     <main>
 
       <div class="card">
-        <h2>One-Shift-Prior Color Change Alerts</h2>
-        <div class="sub">Placeholder logic: when a color change is scheduled for the next shift, this page would display a prep alert for blenders.</div>
-        <div class="alertbox">PREP NEEDED: Machine 5B changing from Black to Red next shift — prepare color mix.</div>
-        <div class="placeholder">Future notification placeholder: Teams / SMS / email / Power Apps push notification can be added later.</div>
-      </div>
+        <h2>Machine Status Board — 1B to 13B</h2>
+        <div class="sub">Visual machine board showing current color and next color-change status.</div>
 
-      <div class="card">
-        <h2>Machine Board: 1B to 13B</h2>
-        <div class="machine-grid">
-          <div class="machine ok"><div class="name">1B</div><div class="line">Running: Natural</div><div class="line">Next: Natural</div></div>
-          <div class="machine soon"><div class="name">2B</div><div class="line">Running: White</div><div class="line">Next: Blue - Shift 3</div></div>
-          <div class="machine ok"><div class="name">3B</div><div class="line">Running: Clear</div><div class="line">Next: Clear</div></div>
-          <div class="machine ok"><div class="name">4B</div><div class="line">Running: Green</div><div class="line">Next: Green</div></div>
-          <div class="machine prep"><div class="name">5B</div><div class="line">Running: Black</div><div class="line">Next: Red - Next Shift</div></div>
-          <div class="machine soon"><div class="name">6B</div><div class="line">Running: Yellow</div><div class="line">Next: White - Tomorrow</div></div>
-          <div class="machine ok"><div class="name">7B</div><div class="line">Running: Clear</div><div class="line">Next: Clear</div></div>
-          <div class="machine ok"><div class="name">8B</div><div class="line">Running: Blue</div><div class="line">Next: Blue</div></div>
-          <div class="machine soon"><div class="name">9B</div><div class="line">Running: Green</div><div class="line">Next: Yellow - Shift 2</div></div>
-          <div class="machine ok"><div class="name">10B</div><div class="line">Running: White</div><div class="line">Next: White</div></div>
-          <div class="machine ok"><div class="name">11B</div><div class="line">Running: Natural</div><div class="line">Next: Natural</div></div>
-          <div class="machine soon"><div class="name">12B</div><div class="line">Running: Red</div><div class="line">Next: Black - Tomorrow</div></div>
-          <div class="machine ok"><div class="name">13B</div><div class="line">Running: Clear</div><div class="line">Next: Clear</div></div>
+        <div class="machine-grid" style="margin-top:12px;">
+          <div class="machine-card ok"><div class="machine-name">1B</div><div class="machine-line">Running: Natural</div><div class="machine-line">Next: Natural</div></div>
+          <div class="machine-card soon"><div class="machine-name">2B</div><div class="machine-line">Running: White</div><div class="machine-line">Next: Blue - Shift 3</div></div>
+          <div class="machine-card ok"><div class="machine-name">3B</div><div class="machine-line">Running: Clear</div><div class="machine-line">Next: Clear</div></div>
+          <div class="machine-card ok"><div class="machine-name">4B</div><div class="machine-line">Running: Green</div><div class="machine-line">Next: Green</div></div>
+
+          <div class="machine-card prep"><div class="machine-name">5B</div><div class="machine-line">Running: Black</div><div class="machine-line">Next: Red - Next Shift</div></div>
+          <div class="machine-card soon"><div class="machine-name">6B</div><div class="machine-line">Running: Yellow</div><div class="machine-line">Next: White - Tomorrow</div></div>
+          <div class="machine-card ok"><div class="machine-name">7B</div><div class="machine-line">Running: Clear</div><div class="machine-line">Next: Clear</div></div>
+          <div class="machine-card ok"><div class="machine-name">8B</div><div class="machine-line">Running: Blue</div><div class="machine-line">Next: Blue</div></div>
+
+          <div class="machine-card soon"><div class="machine-name">9B</div><div class="machine-line">Running: Green</div><div class="machine-line">Next: Yellow - Shift 2</div></div>
+          <div class="machine-card ok"><div class="machine-name">10B</div><div class="machine-line">Running: White</div><div class="machine-line">Next: White</div></div>
+          <div class="machine-card ok"><div class="machine-name">11B</div><div class="machine-line">Running: Natural</div><div class="machine-line">Next: Natural</div></div>
+          <div class="machine-card prep"><div class="machine-name">12B</div><div class="machine-line">Running: Red</div><div class="machine-line">Next: Black - Next Shift</div></div>
+
+          <div class="machine-card ok"><div class="machine-name">13B</div><div class="machine-line">Running: Clear</div><div class="machine-line">Next: Clear</div></div>
         </div>
       </div>
 
       <div class="card">
-        <h2>Production Schedule Structure</h2>
-        <div class="sub">Columns highlighted in yellow are the fields expected from SAP. Blue fields can be manually updated or added later.</div>
+        <h2>Live Color Change Notification</h2>
+        <div class="sub">Any available blender can respond. This demo captures a typed name; the real Power Apps version would capture logged-in user automatically.</div>
+
+        <div class="alert-card">
+          <div class="alert-top">
+            <div>
+              <div class="big-machine">5B</div>
+              <div class="alert-title">Black → Red</div>
+              <div class="sub">Needed next shift • Planned change time: 3:00 PM</div>
+            </div>
+            <span class="status prep" id="status5b">Prep Needed</span>
+          </div>
+
+          <div class="details-grid">
+            <div class="box">
+              <div class="label">Notification Sent</div>
+              <div class="value">2:00 PM</div>
+            </div>
+
+            <div class="box">
+              <div class="label">Claimed By</div>
+              <div class="value" id="claimedBy5b">Not claimed</div>
+            </div>
+
+            <div class="box">
+              <div class="label">Claimed Time</div>
+              <div class="value" id="claimedTime5b">—</div>
+            </div>
+
+            <div class="box">
+              <div class="label">Mix Ready Time</div>
+              <div class="value" id="readyTime5b">—</div>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button class="claim" onclick="claimTask()">I Will Make This Color</button>
+            <button class="readyBtn" onclick="readyTask()">Color Mix Ready</button>
+          </div>
+        </div>
+
+        <div class="placeholder">
+          Placeholder: Power Automate would send a Teams/email/mobile alert one shift before color change.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Today’s Color Change Schedule</h2>
         <table>
           <thead>
             <tr>
-              <th>Machine</th><th>Date</th><th>Shift</th><th>Order</th><th>SKU</th><th>Current Color</th><th>Next Color</th><th>Change Time</th><th>Status</th>
+              <th>Machine</th>
+              <th>Current</th>
+              <th>Next</th>
+              <th>Shift</th>
+              <th>Change Time</th>
+              <th>Status</th>
+              <th>Responder</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="sap-cell">5B</td><td class="sap-cell">2026-04-20</td><td class="sap-cell">Shift 2</td><td class="sap-cell">PO123456</td><td class="sap-cell">SKU-8891</td><td class="sap-cell">Black</td><td class="sap-cell">Red</td><td class="sap-cell">15:00</td><td><span class="status-prep">Prep Needed</span></td>
+              <td>5B</td>
+              <td>Black</td>
+              <td>Red</td>
+              <td>Shift 2</td>
+              <td>3:00 PM</td>
+              <td><span class="status prep">Prep Needed</span></td>
+              <td id="tableResponder">—</td>
             </tr>
             <tr>
-              <td class="sap-cell">2B</td><td class="sap-cell">2026-04-20</td><td class="sap-cell">Shift 3</td><td class="sap-cell">PO123457</td><td class="sap-cell">SKU-4410</td><td class="sap-cell">White</td><td class="sap-cell">Blue</td><td class="sap-cell">23:00</td><td><span class="status-soon">Upcoming</span></td>
+              <td>2B</td>
+              <td>White</td>
+              <td>Blue</td>
+              <td>Shift 3</td>
+              <td>11:00 PM</td>
+              <td><span class="status future">Upcoming</span></td>
+              <td>—</td>
             </tr>
             <tr>
-              <td class="sap-cell">7B</td><td class="sap-cell">2026-04-20</td><td class="sap-cell">Shift 1</td><td class="sap-cell">PO123458</td><td class="sap-cell">SKU-2205</td><td class="sap-cell">Clear</td><td class="sap-cell">Clear</td><td class="sap-cell">No Change</td><td><span class="status-ok">No Prep</span></td>
+              <td>9B</td>
+              <td>Green</td>
+              <td>Yellow</td>
+              <td>Shift 2</td>
+              <td>3:30 PM</td>
+              <td><span class="status claimed">Claimed</span></td>
+              <td>Mike</td>
+            </tr>
+            <tr>
+              <td>12B</td>
+              <td>Red</td>
+              <td>Black</td>
+              <td>Shift 2</td>
+              <td>4:00 PM</td>
+              <td><span class="status prep">Prep Needed</span></td>
+              <td>—</td>
             </tr>
           </tbody>
         </table>
+
+        <div class="placeholder">
+          Placeholder: In live version, this table would come from SharePoint List or SAP production schedule.
+        </div>
       </div>
 
       <div class="card">
-        <h2>SAP Pull Columns Needed</h2>
-        <table>
-          <thead><tr><th>Column</th><th>Source</th><th>Reason</th></tr></thead>
-          <tbody>
-            <tr><td class="sap-cell">Machine / Work Center</td><td>SAP</td><td>Identifies machines 1B through 13B</td></tr>
-            <tr><td class="sap-cell">Production Date</td><td>SAP</td><td>Shows daily production plan</td></tr>
-            <tr><td class="sap-cell">Shift or Start Time</td><td>SAP</td><td>Needed for one-shift-prior alert logic</td></tr>
-            <tr><td class="sap-cell">Production Order</td><td>SAP</td><td>Reference for production team</td></tr>
-            <tr><td class="sap-cell">Material / SKU</td><td>SAP</td><td>Identifies product being made</td></tr>
-            <tr><td class="sap-cell">Color Code / Color Name</td><td>SAP</td><td>Determines what color mix to prepare</td></tr>
-            <tr><td class="sap-cell">Planned Quantity</td><td>SAP</td><td>Helps estimate resin/color needs</td></tr>
-            <tr><td class="manual-cell">Status / Notes</td><td>Manual or future system</td><td>Mix ready, complete, special instructions</td></tr>
-          </tbody>
-        </table>
+        <h2>Action Log / Signature Trail</h2>
+        <div class="sub">This is the audit trail that would be stored in SharePoint for performance tracking.</div>
+
+        <div class="log" id="actionLog">
+          <div class="log-item">
+            <div class="log-title">Notification created: Machine 5B Black → Red</div>
+            <div class="log-sub">2:00 PM • System generated one-shift-prior alert</div>
+          </div>
+
+          <div class="log-item">
+            <div class="log-title">Machine 9B Green → Yellow claimed by Mike</div>
+            <div class="log-sub">1:54 PM • Mix marked ready at 2:18 PM</div>
+          </div>
+        </div>
       </div>
 
     </main>
 
     <aside>
+
+      <div class="card">
+        <h2>Performance Tracker Demo</h2>
+
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="num">14</div>
+            <div class="name">Alerts Claimed This Week</div>
+          </div>
+
+          <div class="metric">
+            <div class="num">6 min</div>
+            <div class="name">Avg Response Time</div>
+          </div>
+
+          <div class="metric">
+            <div class="num">24 min</div>
+            <div class="name">Avg Prep Time</div>
+          </div>
+
+          <div class="metric">
+            <div class="num">93%</div>
+            <div class="name">Completion Rate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Blender Proactivity Ranking</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Blender</th>
+              <th>Claimed</th>
+              <th>Ready</th>
+              <th>Avg Response</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="rank1">
+              <td>John</td>
+              <td>18</td>
+              <td>17</td>
+              <td>3 min</td>
+            </tr>
+            <tr class="rank2">
+              <td>Mike</td>
+              <td>12</td>
+              <td>12</td>
+              <td>7 min</td>
+            </tr>
+            <tr class="rank3">
+              <td>Sam</td>
+              <td>8</td>
+              <td>8</td>
+              <td>10 min</td>
+            </tr>
+            <tr>
+              <td>Alex</td>
+              <td>5</td>
+              <td>5</td>
+              <td>14 min</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="sub">Demo only. Real dashboard would calculate from SharePoint timestamp fields.</div>
+      </div>
+
       <div class="card">
         <h2>Calculator Panel</h2>
-        <div class="sub">These calculators are included so blenders can calculate color mix directly from the same page.</div>
+        <div class="sub">Functional calculators included for blender use.</div>
       </div>
 
       <div class="calc-card card">
         <h3>General Resin Calculator</h3>
+
         <div class="two">
           <div>
             <label>Resin lb</label>
             <input id="genResin" type="number" step="0.1" placeholder="e.g., 25">
           </div>
+
           <div>
             <label>Color %</label>
             <input id="genPct" type="number" step="0.1" placeholder="e.g., 3">
           </div>
         </div>
+
         <div class="result green">
           <div class="small">Color to add</div>
           <div class="big" id="genOut">0 g</div>
           <div class="small" id="genSummary"></div>
         </div>
+
         <div class="kv">
           <span>Resin grams</span><b id="genResinG">0</b>
           <span>Total mix</span><b id="genTotalG">0</b>
@@ -182,83 +684,173 @@ button{width:100%;padding:11px;border:0;border-radius:10px;background:#1f6feb;co
 
       <div class="calc-card card">
         <h3>AXIUM-25lb Recipe</h3>
+
         <label>Color %</label>
         <select id="axPct"></select>
+
         <div class="result purple">
           <div class="small">Recipe color to add</div>
           <div class="big" id="axOut">—</div>
           <div class="small">Fixed 25 lb resin</div>
         </div>
+
         <div class="kv">
           <span>Raw calculated</span><b id="axRaw">—</b>
           <span>Recipe output</span><b id="axRecipe">—</b>
         </div>
-        <div class="sub">Rule: 0.5–3.5% uses previous 50 g rounding. 4–8% uses % × 100 g.</div>
       </div>
 
       <div class="card">
-        <h2>Future SAP / Notification Placeholders</h2>
-        <div class="placeholder">SAP connection placeholder: daily schedule feed or export table.</div>
-        <div class="placeholder">Auto-refresh placeholder: schedule refresh every 5–15 minutes.</div>
-        <div class="placeholder">Notification placeholder: one shift prior alert to blender group.</div>
+        <h2>Implementation Placeholder</h2>
+        <div class="placeholder">
+          SharePoint List stores machine schedule, color change, status, claimed by, claimed time, ready by, and ready time.
+        </div>
+        <div class="placeholder">
+          Power Automate sends Teams/email/mobile notification one shift before color change.
+        </div>
+        <div class="placeholder">
+          Power BI tracks response time, prep time, claimed count, completion rate, and missed alerts.
+        </div>
       </div>
+
     </aside>
+
   </div>
 
-  <div class="footer">Mockup only: SAP integration and notifications are placeholders for team discussion.</div>
+  <div class="footer">
+    Demo webpage for GitHub Pages. No real data is saved in this mockup.
+  </div>
+
 </div>
 
 <script>
 const LB_TO_G = 453.59237;
 
+let claimed = false;
+let ready = false;
+
+function nowText(){
+  return new Date().toLocaleTimeString([], {
+    hour:'numeric',
+    minute:'2-digit'
+  });
+}
+
+function addLog(title, sub){
+  const log = document.getElementById('actionLog');
+  const div = document.createElement('div');
+  div.className = 'log-item';
+  div.innerHTML =
+    '<div class="log-title">' + title + '</div>' +
+    '<div class="log-sub">' + sub + '</div>';
+  log.prepend(div);
+}
+
+function claimTask(){
+  if(claimed){
+    addLog('Demo note: task already claimed', 'In real app, duplicate claiming can be blocked.');
+    return;
+  }
+
+  const name = prompt('Demo only: enter blender name for signature', 'John');
+  if(!name) return;
+
+  claimed = true;
+  const t = nowText();
+
+  document.getElementById('claimedBy5b').textContent = name;
+  document.getElementById('claimedTime5b').textContent = t;
+  document.getElementById('status5b').textContent = 'Claimed / In Progress';
+  document.getElementById('status5b').className = 'status claimed';
+  document.getElementById('tableResponder').textContent = name;
+
+  addLog('Machine 5B color mix claimed by ' + name, t + ' • Signature captured');
+}
+
+function readyTask(){
+  if(!claimed){
+    addLog('Demo note: claim required first', 'Blender should claim the color before marking mix ready.');
+    return;
+  }
+
+  if(ready){
+    addLog('Demo note: mix already marked ready', nowText());
+    return;
+  }
+
+  ready = true;
+  const t = nowText();
+
+  document.getElementById('readyTime5b').textContent = t;
+  document.getElementById('status5b').textContent = 'Mix Ready';
+  document.getElementById('status5b').className = 'status ready';
+
+  addLog('Machine 5B color mix marked READY', t + ' • Prep completed');
+}
+
 function calcGeneral(){
   const lb = Number(document.getElementById('genResin').value);
   const pct = Number(document.getElementById('genPct').value);
+
   if(!lb || !pct){
-    document.getElementById('genOut').textContent='0 g';
-    document.getElementById('genSummary').textContent='';
-    document.getElementById('genResinG').textContent='0';
-    document.getElementById('genTotalG').textContent='0';
+    document.getElementById('genOut').textContent = '0 g';
+    document.getElementById('genSummary').textContent = '';
+    document.getElementById('genResinG').textContent = '0';
+    document.getElementById('genTotalG').textContent = '0';
     return;
   }
+
   const resinG = lb * LB_TO_G;
   const colorG = resinG * pct / 100;
   const totalG = resinG + colorG;
+
   document.getElementById('genOut').textContent = colorG.toFixed(1) + ' g';
   document.getElementById('genSummary').textContent = lb + ' lb @ ' + pct + '%';
   document.getElementById('genResinG').textContent = resinG.toFixed(0) + ' g';
   document.getElementById('genTotalG').textContent = totalG.toFixed(1) + ' g';
 }
+
 document.getElementById('genResin').addEventListener('input', calcGeneral);
 document.getElementById('genPct').addEventListener('input', calcGeneral);
 
 const axPct = document.getElementById('axPct');
+
 const defaultOption = document.createElement('option');
 defaultOption.value = '';
 defaultOption.textContent = 'Select...';
 axPct.appendChild(defaultOption);
-for(let p=0.5;p<=8.0001;p+=0.5){
-  const opt=document.createElement('option');
-  opt.value=Number(p.toFixed(1));
-  opt.textContent=Number(p.toFixed(1)) + '%';
+
+for(let p = 0.5; p <= 8.0001; p += 0.5){
+  const opt = document.createElement('option');
+  opt.value = Number(p.toFixed(1));
+  opt.textContent = Number(p.toFixed(1)) + '%';
   axPct.appendChild(opt);
 }
-function floorToPrev50(x){ return Math.floor(x/50)*50; }
+
+function floorToPrev50(x){
+  return Math.floor(x / 50) * 50;
+}
+
 function calcAxium(){
   const pct = Number(axPct.value);
+
   if(!pct){
-    document.getElementById('axOut').textContent='—';
-    document.getElementById('axRaw').textContent='—';
-    document.getElementById('axRecipe').textContent='—';
+    document.getElementById('axOut').textContent = '—';
+    document.getElementById('axRaw').textContent = '—';
+    document.getElementById('axRecipe').textContent = '—';
     return;
   }
+
   const raw = 25 * LB_TO_G * pct / 100;
   const recipe = pct <= 3.5 ? floorToPrev50(raw) : pct * 100;
+
   document.getElementById('axOut').textContent = recipe.toFixed(0) + ' g';
   document.getElementById('axRaw').textContent = raw.toFixed(1) + ' g';
   document.getElementById('axRecipe').textContent = recipe.toFixed(0) + ' g';
 }
+
 axPct.addEventListener('change', calcAxium);
 </script>
+
 </body>
 </html>
