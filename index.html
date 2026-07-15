@@ -1,22 +1,226 @@
-from artifact_tool import Blob, SpreadsheetFile
-wb_check = SpreadsheetFile.import_xlsx(Blob.load("/mnt/data/june_2026_color_mold_login_prototype.xlsx"))
-print(wb_check.inspect({
-    "kind":"table",
-    "range":"Production Schedule!A1:X8",
-    "include":"values,formulas",
-    "table_max_rows":8,
-    "table_max_cols":24
-}).ndjson)
-print(wb_check.inspect({
-    "kind":"table",
-    "range":"Blender Login!A1:D6",
-    "include":"values,formulas",
-    "table_max_rows":10,
-    "table_max_cols":6
-}).ndjson)
-print(wb_check.inspect({
-    "kind":"match",
-    "search_term":"#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A",
-    "options":{"use_regex":True,"max_results":100},
-    "summary":"final formula error scan"
-}).ndjson)
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Production Color and Mold Change Dashboard</title>
+<style>
+:root{
+--bg:#f4f6fb;--card:#fff;--text:#111827;--muted:#667085;--line:#e5e7eb;
+--red:#fff1f3;--redb:#ffb3c1;--redt:#b42318;
+--yellow:#fff7e6;--yellowb:#fedf89;--yellowt:#b45309;
+--green:#ecfdf3;--greenb:#abefc6;--greent:#027a48;
+--blue:#eef4ff;--blueb:#84a9ff;--bluet:#1d4ed8;
+--purple:#f4f0ff;--purpleb:#d6bbfb;--purplet:#5925dc;
+}
+*{box-sizing:border-box}
+body{font-family:system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text);padding:14px}
+.wrap{max-width:1380px;margin:auto}
+.header,.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-bottom:14px}
+h1{font-size:24px;margin:0} h2{font-size:18px;margin:0 0 10px} h3{font-size:15px;margin:0 0 8px}
+.sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
+.layout{display:grid;grid-template-columns:1.35fr .9fr;gap:14px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill,.status{display:inline-block;border-radius:999px;font-size:11px;font-weight:900;padding:5px 9px}
+.red{background:var(--red);border:1px solid var(--redb);color:var(--redt)}
+.yellow{background:var(--yellow);border:1px solid var(--yellowb);color:var(--yellowt)}
+.green{background:var(--green);border:1px solid var(--greenb);color:var(--greent)}
+.blue{background:var(--blue);border:1px solid var(--blueb);color:var(--bluet)}
+.purple{background:var(--purple);border:1px solid var(--purpleb);color:var(--purplet)}
+.machine-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:760px){.machine-grid{grid-template-columns:repeat(2,1fr)}}
+.machine{border-radius:14px;padding:12px;border:1px solid var(--line);background:#f8fafc}
+.machine.ok{background:var(--green);border-color:var(--greenb)}
+.machine.soon{background:var(--yellow);border-color:var(--yellowb)}
+.machine.prep{background:var(--red);border-color:var(--redb)}
+.machine-name{font-size:21px;font-weight:950}
+.machine-line{font-size:12px;color:#344054;margin-top:4px;font-weight:700}
+.mold-code{font-family:ui-monospace,Consolas,monospace;font-size:16px;font-weight:950;color:var(--purplet)}
+.notice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:760px){.notice-grid{grid-template-columns:1fr}}
+.notice{border-radius:14px;padding:12px;border:1px solid var(--redb);background:var(--red)}
+.notice .n-machine{font-size:22px;font-weight:950}
+.alert-card{border:2px solid var(--redb);background:var(--red);border-radius:16px;padding:15px}
+.alert-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.big-machine{font-size:30px;font-weight:950}
+.alert-title{font-size:18px;font-weight:950;color:var(--redt)}
+.details{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media(max-width:700px){.details{grid-template-columns:1fr 1fr}}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.label{font-size:10px;color:var(--muted);font-weight:900;text-transform:uppercase}
+.value{font-size:14px;font-weight:850;margin-top:4px}
+.login-panel{background:var(--blue);border:1px solid var(--blueb);border-radius:14px;padding:12px;margin-top:12px}
+.login-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+input,select{width:100%;padding:11px;border:1px solid #cfd6df;border-radius:10px;font-size:15px;background:#fff}
+button{border:0;border-radius:11px;padding:11px 13px;font-size:14px;font-weight:900;cursor:pointer}
+.login-btn,.claim-btn{background:#1f6feb;color:#fff}.ready-btn{background:#0b5;color:#fff}
+.button-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);padding:9px;text-align:left;font-size:13px}
+th{background:#f3f4f6;font-size:11px;text-transform:uppercase}
+.log{display:grid;gap:9px}.log-item{border:1px solid var(--line);border-radius:12px;padding:10px;background:#f8fafc}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{border:1px solid var(--line);border-radius:14px;padding:12px;background:#f8fafc}
+.metric .num{font-size:27px;font-weight:950}.metric .name{font-size:12px;color:var(--muted);font-weight:800}
+.calc-result{margin-top:12px;border-radius:14px;padding:14px;color:#fff}.calc-result.general{background:#0b5}.calc-result.axium{background:linear-gradient(135deg,#5b2cff,#7a4dff)}
+.big{font-size:28px;font-weight:950}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.placeholder{background:var(--blue);border:1px dashed var(--blueb);border-radius:12px;padding:10px;color:var(--bluet);font-size:12px;font-weight:800;margin-top:10px}
+.footer{text-align:center;color:var(--muted);font-size:12px;margin:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="header">
+<h1>Production Color and Mold Change Dashboard</h1>
+<div class="sub">Functional GitHub demonstration. Color claim/login and calculators work in the browser. Mold information is display-only and represents data pulled from the Excel/SharePoint schedule.</div>
+<div class="legend"><span class="pill red">Prep Needed</span><span class="pill yellow">Upcoming</span><span class="pill green">Running / Ready</span><span class="pill purple">Mold Display</span><span class="pill blue">Excel / SharePoint Placeholder</span></div>
+</div>
+
+<div class="layout">
+<main>
+
+<div class="card">
+<h2>One-Shift-Prior Color Notifications</h2>
+<div class="notice-grid">
+<div class="notice"><div class="n-machine">5B</div><b>Black → Red</b><div class="sub">Change: Shift 2 • Prepare during Shift 1</div></div>
+<div class="notice"><div class="n-machine">9B</div><b>Green → Yellow</b><div class="sub">Change: Shift 3 • Prepare during Shift 2</div></div>
+<div class="notice"><div class="n-machine">12B</div><b>Red → Black</b><div class="sub">Change: Shift 2 • Prepare during Shift 1</div></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Color Status Board — Machines 1B to 13B</h2>
+<div class="machine-grid" id="colorBoard"></div>
+</div>
+
+<div class="card">
+<h2>Mold Change Board — Display Only</h2>
+<div class="sub">Five-character alphanumeric mold codes. This section is intended to be populated from the same Excel/SharePoint schedule.</div>
+<div class="machine-grid" id="moldBoard" style="margin-top:12px"></div>
+<div class="placeholder">No user interaction is required for molds. The live version would simply refresh this display when the sheet changes.</div>
+</div>
+
+<div class="card">
+<h2>Live Color Claim Demonstration</h2>
+<div class="alert-card">
+<div class="alert-top"><div><div class="big-machine">5B</div><div class="alert-title">Black → Red</div><div class="sub">Needed next shift • Planned change time: 3:00 PM</div></div><span class="status red" id="claimStatus">Prep Needed</span></div>
+<div class="details">
+<div class="box"><div class="label">Notification Sent</div><div class="value">2:00 PM</div></div>
+<div class="box"><div class="label">Logged-in Blender</div><div class="value" id="loggedUser">Not logged in</div></div>
+<div class="box"><div class="label">Claimed By</div><div class="value" id="claimedBy">Not claimed</div></div>
+<div class="box"><div class="label">Claimed Time</div><div class="value" id="claimedTime">—</div></div>
+</div>
+
+<div class="login-panel">
+<div class="label">Blender code login</div>
+<div class="login-row">
+<input id="loginCode" inputmode="numeric" maxlength="4" placeholder="Enter 4-digit code">
+<button class="login-btn" onclick="loginBlender()">Login</button>
+</div>
+<div class="sub" id="loginMessage">Demo codes are stored in the Blender Login sheet.</div>
+</div>
+
+<div class="button-row">
+<button class="claim-btn" onclick="claimColor()">I Will Make This Color</button>
+<button class="ready-btn" onclick="markReady()">Color Mix Ready</button>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>Color Change Action Log</h2>
+<div class="log" id="actionLog">
+<div class="log-item"><b>System:</b> Machine 5B Black → Red notification created at 2:00 PM.</div>
+</div>
+</div>
+
+</main>
+
+<aside>
+<div class="card">
+<h2>Performance Tracker Demo</h2>
+<div class="metric-grid">
+<div class="metric"><div class="num">14</div><div class="name">Alerts Claimed</div></div>
+<div class="metric"><div class="num">6 min</div><div class="name">Avg Response</div></div>
+<div class="metric"><div class="num">24 min</div><div class="name">Avg Prep</div></div>
+<div class="metric"><div class="num">93%</div><div class="name">Completion</div></div>
+</div>
+<table style="margin-top:12px">
+<thead><tr><th>Blender</th><th>Claimed</th><th>Avg Response</th></tr></thead>
+<tbody><tr><td>John</td><td>18</td><td>3 min</td></tr><tr><td>Mike</td><td>12</td><td>7 min</td></tr><tr><td>Sam</td><td>8</td><td>10 min</td></tr><tr><td>Alex</td><td>5</td><td>14 min</td></tr></tbody>
+</table>
+</div>
+
+<div class="card">
+<h2>General Resin Calculator</h2>
+<div class="two"><div><div class="label">Resin lb</div><input id="resinLb" type="number" step="0.1"></div><div><div class="label">Color %</div><input id="colorPct" type="number" step="0.1"></div></div>
+<div class="calc-result general"><div class="label" style="color:white">Color to add</div><div class="big" id="generalOut">0 g</div></div>
+</div>
+
+<div class="card">
+<h2>AXIUM-25lb Recipe</h2>
+<div class="label">Color %</div><select id="axPct"><option value="">Select...</option></select>
+<div class="calc-result axium"><div class="label" style="color:white">Recipe color to add</div><div class="big" id="axOut">—</div></div>
+<div class="sub">0.5–3.5% rounds down to the previous 50 g. 4–8% uses % × 100 g.</div>
+</div>
+
+<div class="card">
+<h2>Data Connection Placeholder</h2>
+<div class="placeholder">Production Schedule sheet supplies machine, current/next color, shift, current/next mold, and planned change time.</div>
+<div class="placeholder">Blender Login sheet supplies code-to-name lookup.</div>
+<div class="placeholder">A real SharePoint/Power Apps version would securely record the logged-in Microsoft user and timestamps.</div>
+</div>
+</aside>
+</div>
+<div class="footer">Demo page only. Browser changes are not saved after refresh.</div>
+</div>
+
+<script>
+const LB_TO_G=453.59237;
+const blenderCodes={"1042":"John","2084":"Mike","3196":"Sam","4275":"Alex","5318":"Raj"};
+let loggedInBlender=null,claimed=false,ready=false;
+
+const colorMachines=[
+["1B","Natural","Natural","ok"],["2B","White","Blue - Shift 3","soon"],["3B","Clear","Clear","ok"],["4B","Green","Green","ok"],
+["5B","Black","Red - Next Shift","prep"],["6B","Yellow","White - Tomorrow","soon"],["7B","Clear","Clear","ok"],["8B","Blue","Blue","ok"],
+["9B","Green","Yellow - Shift 3","soon"],["10B","White","White","ok"],["11B","Natural","Natural","ok"],["12B","Red","Black - Next Shift","prep"],["13B","Clear","Clear","ok"]
+];
+const moldMachines=[
+["1B","A4C21","A4C21","ok"],["2B","B7D34","F2G18","soon"],["3B","C1H52","C1H52","ok"],["4B","D8J07","D8J07","ok"],
+["5B","E3K66","M5P12","prep"],["6B","F6L40","Q1R25","soon"],["7B","G2M83","G2M83","ok"],["8B","H9N14","H9N14","ok"],
+["9B","J4P31","S7T09","soon"],["10B","K5Q72","K5Q72","ok"],["11B","L1R45","L1R45","ok"],["12B","M8S20","V3W61","prep"],["13B","N6T53","N6T53","ok"]
+];
+
+function renderBoards(){
+document.getElementById("colorBoard").innerHTML=colorMachines.map(x=>`<div class="machine ${x[3]}"><div class="machine-name">${x[0]}</div><div class="machine-line">Running: ${x[1]}</div><div class="machine-line">Next: ${x[2]}</div></div>`).join("");
+document.getElementById("moldBoard").innerHTML=moldMachines.map(x=>`<div class="machine ${x[3]}"><div class="machine-name">${x[0]}</div><div class="machine-line">Current Mold: <span class="mold-code">${x[1]}</span></div><div class="machine-line">Next Mold: <span class="mold-code">${x[2]}</span></div></div>`).join("");
+}
+function timeNow(){return new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}
+function addLog(text){const d=document.createElement("div");d.className="log-item";d.innerHTML=text;document.getElementById("actionLog").prepend(d);}
+function loginBlender(){
+const code=document.getElementById("loginCode").value.trim();
+const name=blenderCodes[code];
+if(!name){loggedInBlender=null;document.getElementById("loggedUser").textContent="Not logged in";document.getElementById("loginMessage").textContent="Invalid code. Try a code listed in the Blender Login sheet.";return;}
+loggedInBlender=name;document.getElementById("loggedUser").textContent=name;document.getElementById("loginMessage").textContent="Logged in as "+name+".";addLog("<b>"+name+"</b> logged in at "+timeNow()+".");
+}
+function claimColor(){
+if(!loggedInBlender){alert("Please enter your blender code and log in first.");return;}
+if(claimed){alert("This color has already been claimed.");return;}
+claimed=true;const t=timeNow();document.getElementById("claimedBy").textContent=loggedInBlender;document.getElementById("claimedTime").textContent=t;document.getElementById("claimStatus").textContent="Claimed / In Progress";document.getElementById("claimStatus").className="status yellow";addLog("<b>"+loggedInBlender+"</b> claimed Machine 5B color at "+t+".");
+}
+function markReady(){
+if(!claimed){alert("The color must be claimed first.");return;}
+if(ready){alert("The color is already marked ready.");return;}
+ready=true;document.getElementById("claimStatus").textContent="Mix Ready";document.getElementById("claimStatus").className="status green";addLog("<b>"+document.getElementById("claimedBy").textContent+"</b> marked Machine 5B color mix ready at "+timeNow()+".");
+}
+function calcGeneral(){
+const lb=Number(document.getElementById("resinLb").value),pct=Number(document.getElementById("colorPct").value);
+document.getElementById("generalOut").textContent=lb>0&&pct>0?(lb*LB_TO_G*pct/100).toFixed(1)+" g":"0 g";
+}
+document.getElementById("resinLb").addEventListener("input",calcGeneral);
+document.getElementById("colorPct").addEventListener("input",calcGeneral);
+for(let p=.5;p<=8.0001;p+=.5){const o=document.createElement("option");o.value=p;o.textContent=p+"%";document.getElementById("axPct").appendChild(o);}
+document.getElementById("axPct").addEventListener("change",function(){const p=Number(this.value);if(!p){document.getElementById("axOut").textContent="—";return;}const raw=25*LB_TO_G*p/100;const recipe=p<=3.5?Math.floor(raw/50)*50:p*100;document.getElementById("axOut").textContent=recipe.toFixed(0)+" g";});
+renderBoards();
+</script>
+</body>
+</html>
