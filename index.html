@@ -14,13 +14,13 @@
 --purple:#f4f0ff;--purpleb:#d6bbfb;--purplet:#5925dc;
 }
 *{box-sizing:border-box}
-body{font-family:system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text);padding:14px}
+body{font-family:system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text);padding:14px;min-width:1180px}
 .wrap{max-width:1380px;margin:auto}
 .header,.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-bottom:14px}
 h1{font-size:24px;margin:0} h2{font-size:18px;margin:0 0 10px} h3{font-size:15px;margin:0 0 8px}
 .sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
 .layout{display:grid;grid-template-columns:1.35fr .9fr;gap:14px}
-@media(max-width:980px){.layout{grid-template-columns:1fr}}
+
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .pill,.status{display:inline-block;border-radius:999px;font-size:11px;font-weight:900;padding:5px 9px}
 .red{background:var(--red);border:1px solid var(--redb);color:var(--redt)}
@@ -28,7 +28,7 @@ h1{font-size:24px;margin:0} h2{font-size:18px;margin:0 0 10px} h3{font-size:15px
 .green{background:var(--green);border:1px solid var(--greenb);color:var(--greent)}
 .blue{background:var(--blue);border:1px solid var(--blueb);color:var(--bluet)}
 .purple{background:var(--purple);border:1px solid var(--purpleb);color:var(--purplet)}
-.board-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}@media(max-width:980px){.board-pair{grid-template-columns:1fr}}.machine-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.board-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}.machine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 @media(max-width:760px){.machine-grid{grid-template-columns:repeat(2,1fr)}}
 .machine{border-radius:14px;padding:12px;border:1px solid var(--line);background:#f8fafc}
 .machine.ok{background:var(--green);border-color:var(--greenb)}
@@ -65,6 +65,47 @@ th{background:#f3f4f6;font-size:11px;text-transform:uppercase}
 .big{font-size:28px;font-weight:950}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .placeholder{background:var(--blue);border:1px dashed var(--blueb);border-radius:12px;padding:10px;color:var(--bluet);font-size:12px;font-weight:800;margin-top:10px}
 .footer{text-align:center;color:var(--muted);font-size:12px;margin:15px}
+
+.color-panel{
+  border:3px solid #2563eb;
+  background:linear-gradient(180deg,#eff6ff 0%,#ffffff 28%);
+  box-shadow:0 8px 22px rgba(37,99,235,.16);
+}
+.color-panel h2{
+  color:#1d4ed8;
+  border-bottom:2px solid #bfdbfe;
+  padding-bottom:9px;
+}
+.mold-panel{
+  border:3px solid #7c3aed;
+  background:linear-gradient(180deg,#f5f3ff 0%,#ffffff 28%);
+  box-shadow:0 8px 22px rgba(124,58,237,.16);
+}
+.mold-panel h2{
+  color:#6d28d9;
+  border-bottom:2px solid #ddd6fe;
+  padding-bottom:9px;
+}
+.panel-tag{
+  display:inline-block;
+  margin-left:8px;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  vertical-align:middle;
+}
+.color-tag{
+  background:#dbeafe;
+  color:#1d4ed8;
+  border:1px solid #93c5fd;
+}
+.mold-tag{
+  background:#ede9fe;
+  color:#6d28d9;
+  border:1px solid #c4b5fd;
+}
+
 </style>
 </head>
 <body>
@@ -90,24 +131,20 @@ th{background:#f3f4f6;font-size:11px;text-transform:uppercase}
 
 <div class="board-pair">
 
-<div class="card">
-<h2>Color Status Board — Machines 1B to 13B</h2>
+<div class="card color-panel">
+<h2>Color Status Board — Machines 1B to 13B <span class="panel-tag color-tag">COLOR</span></h2>
 <div class="sub">Current color and next scheduled color for each machine.</div>
 <div class="machine-grid" id="colorBoard" style="margin-top:12px"></div>
 </div>
 
-<div class="card">
-<h2>Mold Change Board — Display Only</h2>
-<div class="sub">Current and next five-character mold code for each machine.</div>
+<div class="card mold-panel">
+<h2>Mold Change Board — Display Only <span class="panel-tag mold-tag">MOLD</span></h2>
+<div class="sub">Current mold, next mold, and planned mold-change timeframe for each machine.</div>
 <div class="machine-grid" id="moldBoard" style="margin-top:12px"></div>
 <div class="placeholder">Mold information is display-only and intended to refresh from the Excel/SharePoint schedule.</div>
 </div>
 
 </div>
-<div class="machine-grid" id="moldBoard" style="margin-top:12px"></div>
-<div class="placeholder">No user interaction is required for molds. The live version would simply refresh this display when the sheet changes.</div>
-</div>
-
 <div class="card">
 <h2>Live Color Claim Demonstration</h2>
 <div class="alert-card">
@@ -194,14 +231,24 @@ const colorMachines=[
 ["9B","Green","Yellow - Shift 3","soon"],["10B","White","White","ok"],["11B","Natural","Natural","ok"],["12B","Red","Black - Next Shift","prep"],["13B","Clear","Clear","ok"]
 ];
 const moldMachines=[
-["1B","A4C21","A4C21","ok"],["2B","B7D34","F2G18","soon"],["3B","C1H52","C1H52","ok"],["4B","D8J07","D8J07","ok"],
-["5B","E3K66","M5P12","prep"],["6B","F6L40","Q1R25","soon"],["7B","G2M83","G2M83","ok"],["8B","H9N14","H9N14","ok"],
-["9B","J4P31","S7T09","soon"],["10B","K5Q72","K5Q72","ok"],["11B","L1R45","L1R45","ok"],["12B","M8S20","V3W61","prep"],["13B","N6T53","N6T53","ok"]
+["1B","A4C21","A4C21","No change","ok"],
+["2B","B7D34","F2G18","Tuesday","soon"],
+["3B","C1H52","C1H52","No change","ok"],
+["4B","D8J07","D8J07","No change","ok"],
+["5B","E3K66","M5P12","Tomorrow","prep"],
+["6B","F6L40","Q1R25","In 5 days","soon"],
+["7B","G2M83","G2M83","No change","ok"],
+["8B","H9N14","H9N14","No change","ok"],
+["9B","J4P31","S7T09","Wednesday","soon"],
+["10B","K5Q72","K5Q72","No change","ok"],
+["11B","L1R45","L1R45","No change","ok"],
+["12B","M8S20","V3W61","In 2 days","prep"],
+["13B","N6T53","N6T53","No change","ok"]
 ];
 
 function renderBoards(){
 document.getElementById("colorBoard").innerHTML=colorMachines.map(x=>`<div class="machine ${x[3]}"><div class="machine-name">${x[0]}</div><div class="machine-line">Running: ${x[1]}</div><div class="machine-line">Next: ${x[2]}</div></div>`).join("");
-document.getElementById("moldBoard").innerHTML=moldMachines.map(x=>`<div class="machine ${x[3]}"><div class="machine-name">${x[0]}</div><div class="machine-line">Current Mold: <span class="mold-code">${x[1]}</span></div><div class="machine-line">Next Mold: <span class="mold-code">${x[2]}</span></div></div>`).join("");
+document.getElementById("moldBoard").innerHTML=moldMachines.map(x=>`<div class="machine ${x[4]}"><div class="machine-name">${x[0]}</div><div class="machine-line">Current Mold: <span class="mold-code">${x[1]}</span></div><div class="machine-line">Next Mold: <span class="mold-code">${x[2]}</span></div><div class="machine-line"><b>Next Change:</b> ${x[3]}</div></div>`).join("");
 }
 function timeNow(){return new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}
 function addLog(text){const d=document.createElement("div");d.className="log-item";d.innerHTML=text;document.getElementById("actionLog").prepend(d);}
@@ -229,7 +276,9 @@ document.getElementById("resinLb").addEventListener("input",calcGeneral);
 document.getElementById("colorPct").addEventListener("input",calcGeneral);
 for(let p=.5;p<=8.0001;p+=.5){const o=document.createElement("option");o.value=p;o.textContent=p+"%";document.getElementById("axPct").appendChild(o);}
 document.getElementById("axPct").addEventListener("change",function(){const p=Number(this.value);if(!p){document.getElementById("axOut").textContent="—";return;}const raw=25*LB_TO_G*p/100;const recipe=p<=3.5?Math.floor(raw/50)*50:p*100;document.getElementById("axOut").textContent=recipe.toFixed(0)+" g";});
-renderBoards();
+document.addEventListener("DOMContentLoaded", function(){
+  renderBoards();
+});
 </script>
 </body>
 </html>
