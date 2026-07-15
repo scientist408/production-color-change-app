@@ -28,7 +28,7 @@ h1{font-size:24px;margin:0} h2{font-size:18px;margin:0 0 10px} h3{font-size:15px
 .green{background:var(--green);border:1px solid var(--greenb);color:var(--greent)}
 .blue{background:var(--blue);border:1px solid var(--blueb);color:var(--bluet)}
 .purple{background:var(--purple);border:1px solid var(--purpleb);color:var(--purplet)}
-.machine-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.board-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}@media(max-width:980px){.board-pair{grid-template-columns:1fr}}.machine-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 @media(max-width:760px){.machine-grid{grid-template-columns:repeat(2,1fr)}}
 .machine{border-radius:14px;padding:12px;border:1px solid var(--line);background:#f8fafc}
 .machine.ok{background:var(--green);border-color:var(--greenb)}
@@ -87,14 +87,23 @@ th{background:#f3f4f6;font-size:11px;text-transform:uppercase}
 </div>
 </div>
 
+
+<div class="board-pair">
+
 <div class="card">
 <h2>Color Status Board — Machines 1B to 13B</h2>
-<div class="machine-grid" id="colorBoard"></div>
+<div class="sub">Current color and next scheduled color for each machine.</div>
+<div class="machine-grid" id="colorBoard" style="margin-top:12px"></div>
 </div>
 
 <div class="card">
 <h2>Mold Change Board — Display Only</h2>
-<div class="sub">Five-character alphanumeric mold codes. This section is intended to be populated from the same Excel/SharePoint schedule.</div>
+<div class="sub">Current and next five-character mold code for each machine.</div>
+<div class="machine-grid" id="moldBoard" style="margin-top:12px"></div>
+<div class="placeholder">Mold information is display-only and intended to refresh from the Excel/SharePoint schedule.</div>
+</div>
+
+</div>
 <div class="machine-grid" id="moldBoard" style="margin-top:12px"></div>
 <div class="placeholder">No user interaction is required for molds. The live version would simply refresh this display when the sheet changes.</div>
 </div>
