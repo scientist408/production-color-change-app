@@ -41,7 +41,36 @@ h1{font-size:24px;margin:0} h2{font-size:18px;margin:0 0 10px} h3{font-size:15px
 @media(max-width:760px){.notice-grid{grid-template-columns:1fr}}
 .notice{border-radius:14px;padding:12px;border:1px solid var(--redb);background:var(--red)}
 .notice .n-machine{font-size:22px;font-weight:950}
-.alert-card{border:2px solid var(--redb);background:var(--red);border-radius:16px;padding:15px}
+.alert-card{
+  border-radius:16px;
+  padding:15px;
+  transition:background-color .35s ease,border-color .35s ease,box-shadow .35s ease;
+}
+.alert-card.waiting{
+  background:#fff1f3;
+  border:3px solid #ef4444;
+  box-shadow:0 8px 20px rgba(239,68,68,.15);
+}
+.alert-card.in-progress{
+  background:#fef3c7;
+  border:3px solid #f59e0b;
+  box-shadow:0 8px 20px rgba(245,158,11,.18);
+}
+.alert-card.mix-ready{
+  background:#dcfce7;
+  border:3px solid #22c55e;
+  box-shadow:0 8px 20px rgba(34,197,94,.20);
+}
+.alert-card.in-progress .login-panel{
+  background:#fffbeb;
+  border-color:#fcd34d;
+}
+.alert-card.mix-ready .login-panel{
+  background:#f0fdf4;
+  border-color:#86efac;
+}
+.alert-card.in-progress .alert-title{color:#b45309}
+.alert-card.mix-ready .alert-title{color:#166534}
 .alert-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .big-machine{font-size:30px;font-weight:950}
 .alert-title{font-size:18px;font-weight:950;color:var(--redt)}
@@ -147,7 +176,7 @@ th{background:#f3f4f6;font-size:11px;text-transform:uppercase}
 </div>
 <div class="card">
 <h2>Live Color Claim Demonstration</h2>
-<div class="alert-card">
+<div class="alert-card waiting" id="claimPanel">
 <div class="alert-top"><div><div class="big-machine">5B</div><div class="alert-title">Black → Red</div><div class="sub">Needed next shift • Planned change time: 3:00 PM</div></div><span class="status red" id="claimStatus">Prep Needed</span></div>
 <div class="details">
 <div class="box"><div class="label">Notification Sent</div><div class="value">2:00 PM</div></div>
@@ -222,7 +251,7 @@ th{background:#f3f4f6;font-size:11px;text-transform:uppercase}
 
 <script>
 const LB_TO_G=453.59237;
-const blenderCodes={"1111":"Billa","2222":"Raj","3333":"Fagindra","4444":"Alex","5555":"Ram"};
+const blenderCodes={"1042":"John","2084":"Mike","3196":"Sam","4275":"Alex","5318":"Raj"};
 let loggedInBlender=null,claimed=false,ready=false;
 
 const colorMachines=[
@@ -261,12 +290,25 @@ loggedInBlender=name;document.getElementById("loggedUser").textContent=name;docu
 function claimColor(){
 if(!loggedInBlender){alert("Please enter your blender code and log in first.");return;}
 if(claimed){alert("This color has already been claimed.");return;}
-claimed=true;const t=timeNow();document.getElementById("claimedBy").textContent=loggedInBlender;document.getElementById("claimedTime").textContent=t;document.getElementById("claimStatus").textContent="Claimed / In Progress";document.getElementById("claimStatus").className="status yellow";addLog("<b>"+loggedInBlender+"</b> claimed Machine 5B color at "+t+".");
+claimed=true;
+const t=timeNow();
+document.getElementById("claimedBy").textContent=loggedInBlender;
+document.getElementById("claimedTime").textContent=t;
+document.getElementById("claimStatus").textContent="Color Being Prepared";
+document.getElementById("claimStatus").className="status yellow";
+document.getElementById("claimPanel").classList.remove("waiting","mix-ready");
+document.getElementById("claimPanel").classList.add("in-progress");
+addLog("<b>"+loggedInBlender+"</b> claimed Machine 5B color at "+t+".");
 }
 function markReady(){
 if(!claimed){alert("The color must be claimed first.");return;}
 if(ready){alert("The color is already marked ready.");return;}
-ready=true;document.getElementById("claimStatus").textContent="Mix Ready";document.getElementById("claimStatus").className="status green";addLog("<b>"+document.getElementById("claimedBy").textContent+"</b> marked Machine 5B color mix ready at "+timeNow()+".");
+ready=true;
+document.getElementById("claimStatus").textContent="Mix Ready";
+document.getElementById("claimStatus").className="status green";
+document.getElementById("claimPanel").classList.remove("waiting","in-progress");
+document.getElementById("claimPanel").classList.add("mix-ready");
+addLog("<b>"+document.getElementById("claimedBy").textContent+"</b> marked Machine 5B color mix ready at "+timeNow()+".");
 }
 function calcGeneral(){
 const lb=Number(document.getElementById("resinLb").value),pct=Number(document.getElementById("colorPct").value);
